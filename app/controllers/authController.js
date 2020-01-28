@@ -11,6 +11,7 @@ const signToken = id => jwt.sign({
 })
 
 exports.signup = catchAsync(async (req, res, next) => {
+                
     const newUser = await User.create({
         // เพื่อป้องกันไม่ให้ User ใส่ role = admin ซึ่งจะทำให้เราสูญเสียความปลอดภัย เราจึงกำจัดข้อมูลที่เข้ามาด้วย key เท่านั้น (Admin เราสร้างแบบ manual ใน mongoDB)
         userName: req.body.userName,

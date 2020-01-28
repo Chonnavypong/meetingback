@@ -3,14 +3,6 @@ const validator = require('validator')
 const bcrypt = require('bcrypt')
 
 const userSchema = new mongoose.Schema({
-    userName: {
-        type: String,
-        required: [true, 'Need username'],
-        unique: true,
-        trim: true,
-        lowercase: true,
-        minlength: [5, 'user name must have equal or more than 5 characters']
-    },
     email: {
         type: String,
         required: [true, 'Please provide your email'],
@@ -74,6 +66,7 @@ userSchema.pre('save', async function (next) {
     next()
 })
 
+// Check password login (candidatePassword) as same as password in database(userPassword)
 userSchema.methods.correctPassword = async function(
     candidatePassword,
     userPassword
