@@ -6,17 +6,17 @@ const sharp = require('sharp')
 // multer-A. multer setting
 const multer = require('multer')
 // multer-B. multer storage setting
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb( null, 'public/img/equipment')
-  },
-  filename: (req, file, cb) => {
-    const originalName = file.originalname.split('.')[0]
-    const ext = file.mimetype.split('/')[1]
-    cb(null,`equip-${originalName}-${Date.now()}.${ext}`)
-  }
-})
-// const multerStorage = multer.memoryStorage()
+// const multerStorage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb( null, 'public/img/equipment')
+//   },
+//   filename: (req, file, cb) => {
+//     const originalName = file.originalname.split('.')[0]
+//     const ext = file.mimetype.split('/')[1]
+//     cb(null,`equip-${originalName}-${Date.now()}.${ext}`)
+//   }
+// })
+const multerStorage = multer.memoryStorage()
 // multer-C. multer filter setting
 const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image')) {
@@ -38,19 +38,42 @@ exports.uploadEquipPhoto = upload.fields([
 ])
 
 exports.resizeEquipPhoto = catchAsync( async(req, res, next) => {
-  console.log(req.file.originalname)
+  // console.log(!req.files.photoCover)
 
-  if (!req.file) return next()
-
-  const originalName = req.file.originalname.split('.')[0]
+  if (!req.files.photoCover || !req.files.photo) return next()
+  
+  // // 1) Cover Photo
+  const originalName = req.files.photoCover[0].originalname.split('.')[0]
   // console.log(`original name : ${originalName}`)
-  req.file.filename = `equip-${originalName}-${Date.now()}.jpeg`
+  req.body.photoCover = `equip-${originalName}-${Date.now()}.jpeg`
+  // console.log(req.files.photoCover)
 
-  await sharp(req.file.buffer)
-    .resize(500, 500)
+  await sharp(req.files.photoCover[0].buffer)
+    .resize(1500, 500)
     .toFormat('jpeg')
     .jpeg({ quality: 90 })
-    .toFile(`public/img/equipment/${req.file.filename}`)
+    .toFile(`public/img/equipment/${req.body.photoCover}`)
+
+  // 2) Photo
+    req.body.photos = []
+    // console.log(req.body.photo)
+    // console.log(req.files)
+    await Promise.all(
+      req.files.photo.map( async (file, i) => {
+        const originalName = file.originalname.split('.')[0]
+        const filename = `equip-${originalName}-${Date.now()}-${i+1}.jpeg`
+
+        await sharp( file.buffer )
+          .resize(500, 500)
+          .toFormat('jpeg')
+          .jpeg( { quality: 90 })
+          .toFile(`public/img/equipment/${filename}`)
+
+        await req.body.photos.push(filename)
+      })
+    )
+
+    console.log(Array.isArray(req.body.photos))
 
   next()
 })

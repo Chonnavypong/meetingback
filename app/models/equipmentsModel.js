@@ -12,9 +12,7 @@ const equipSchema = new mongoose.Schema({
     photoCover: {
         type: String
     },
-    photo: {
-        type: String
-    }
+    photos: [String]
 }, {
     toJSON: {
         virtuals: true
