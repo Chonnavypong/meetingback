@@ -8,9 +8,10 @@ const router = express.Router()
 // Signup - Register
 router.post('/signup',authController.signup)
 router.post('/login',authController.login)
+router.post('/logout',authController.logout)
 
 
 router.route('/')
-    .get(usersController.getAllUsers)
+    .get( authController.protect, usersController.getAllUsers)
 
 module.exports = router

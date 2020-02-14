@@ -42,6 +42,14 @@ const userSchema = new mongoose.Schema({
             message: 'role is either:  user or admin'
         },
         default: 'user'
+    },
+    passwordChangeAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
+    active: {
+        type: Boolean,
+        default: true,
+        select: false
     }
 }, {
     toJSON: {
@@ -66,13 +74,33 @@ userSchema.pre('save', async function (next) {
     next()
 })
 
+userSchema.pre('save', function (next) {
+    if (!this.isModified('password') || this.isNew) return next()
+
+    this.passwordChangeAt = Date.now() - 1000
+    next()
+})
+
 // Check password login (candidatePassword) as same as password in database(userPassword)
-userSchema.methods.correctPassword = async function(
+userSchema.methods.correctPassword = async function (
     candidatePassword,
     userPassword
-  ) {
+) {
     return await bcrypt.compare(candidatePassword, userPassword);
-  }
+}
+
+userSchema.methods.changedPasswordAfter = function(JWTimestamp) {
+    if (this.passwordChangeAt) {
+        const changedTimestamp = parseInt(
+            this.passwordChangeAt.getTime() / 1000, 10
+        )
+
+        return JWTimestamp < changedTimestamp
+    }
+
+    // False means NOT changed
+    return false
+}
 
 const Users = mongoose.model('Users', userSchema)
 

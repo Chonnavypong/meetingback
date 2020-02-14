@@ -1,20 +1,27 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const equipSchema = new mongoose.model({
+const equipSchema = new mongoose.Schema({
     name: {
         type: String,
-        required : true
+        // required : true
     },
     detail: {
         type: String
     },
-    image: {
+    photoCover: {
+        type: String
+    },
+    photo: {
         type: String
     }
 }, {
-    toJSON: {virtuals : true},
-    toObject: {virtuals: true},
+    toJSON: {
+        virtuals: true
+    },
+    toObject: {
+        virtuals: true
+    },
     timestamps: true
 })
 

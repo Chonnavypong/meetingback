@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 
-const bookingShema = new mongoose.shema({
+const bookingShema = new mongoose.Shema({
     title: {
         type: String,
     },

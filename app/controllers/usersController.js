@@ -46,7 +46,13 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 
 exports.creatUser = async (req, res, next) => {
     try {
-        const data = await Users.create(req.body)
+        const data = await Users.create({
+            email: req.body.email,
+            firstName: req.body.firstName,
+            lastName: req.body.lastName,
+            password: req.body.password,
+            passwordConfirm: req.body.passwordConfirm
+        })
         res.status(200).json({
             status: 'success',
             result: data.length,
