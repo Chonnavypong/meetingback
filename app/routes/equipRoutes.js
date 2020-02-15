@@ -6,7 +6,11 @@ const authController = require('./../controllers/authController')
 const router = express.Router()
 
 router.route('/')
-  .get(authController.protect, equipController.getAllEquip)
+  .get(equipController.getAllEquip)
   // .post(authController.protect, authController.restricTo('admin'), equipController.creatEquip)
   .post(equipController.uploadEquipPhoto, equipController.resizeEquipPhoto, equipController.creatEquip)
-module.exports = router
+
+router.route('/:id')
+  .delete(equipController.deleteEquip)
+  .patch(equipController.updateEquip)
+  module.exports = router

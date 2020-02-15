@@ -73,40 +73,10 @@ exports.resizeEquipPhoto = catchAsync( async(req, res, next) => {
       })
     )
 
-    console.log(Array.isArray(req.body.photos))
+    // console.log(Array.isArray(req.body.photos))
 
   next()
 })
-// exports.resizeTourImages = catchAsync(async (req, res, next) => {
-//   if (!req.files.imageCover || !req.files.images) return next();
-
-//   // 1) Cover image
-//   req.body.imageCover = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
-//   await sharp(req.files.imageCover[0].buffer)
-//     .resize(2000, 1333)
-//     .toFormat('jpeg')
-//     .jpeg({ quality: 90 })
-//     .toFile(`public/img/tours/${req.body.imageCover}`);
-
-//   // 2) Images
-//   req.body.images = [];
-
-//   await Promise.all(
-//     req.files.images.map(async (file, i) => {
-//       const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
-
-//       await sharp(file.buffer)
-//         .resize(2000, 1333)
-//         .toFormat('jpeg')
-//         .jpeg({ quality: 90 })
-//         .toFile(`public/img/tours/${filename}`);
-
-//       req.body.images.push(filename);
-//     })
-//   );
-
-//   next();
-// });
 
 exports.getAllEquip = catchAsync(async (req, res, next) => {
   const equip = await Equip.find().select(['-createdAt', '-updatedAt'])
@@ -114,9 +84,10 @@ exports.getAllEquip = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     result: equip.length,
-    data: {
-      equip
-    }
+    // data: {
+    //   equip
+    // }
+    equip
   })
 })
 
@@ -134,6 +105,48 @@ exports.creatEquip = async (req, res, next) => {
     res.status(401).json({
       status: 'Fail',
       message: err.message
+    })
+  }
+}
+
+exports.deleteEquip = async (req, res, next) => {
+  try {
+    const doc = await Equip.findByIdAndDelete(req.params.id)
+
+    if( !doc ) {
+      return next( new AppError('No document found with that ID', 404))
+    }
+    res.status(200)
+  
+  } catch (err) {
+    
+      res.status(401).json({
+      status: 'Fail',
+      message: err.message
+    
+    })
+  }
+}
+
+exports.updateEquip = async (req, res, next) => {
+  try {
+    const doc = await Equip.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    })
+
+    if (!doc) {
+      return next(new AppError('No document found with that ID', 404));
+    }
+
+    res.status(200)
+  
+  } catch (err) {
+    
+      res.status(401).json({
+      status: 'Fail',
+      message: err.message
+    
     })
   }
 }

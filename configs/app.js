@@ -1,9 +1,10 @@
+const path = require('path')
 const express = require('express')
 const morgan = require('morgan')
 // const cors = require('cors')
 
-const AppError = require('./../app/utils/appError');
-const globalErrorHandler = require('./../app/controllers/errorController');
+const AppError = require('../app/utils/appError');
+const globalErrorHandler = require('../app/controllers/errorController');
 
 const usersRouter = require('../app/routes/usersRoutes')
 const equipRouter = require('../app/routes/equipRoutes')
@@ -36,6 +37,12 @@ app.use(express.urlencoded({
     extended: true,
     limit: '10kb'
 }))
+
+const cors = require('cors')
+app.use(cors())
+
+//  การอ้างอิง จาก app.js ไปหา public folder -> ./../public
+app.use(express.static(path.join(__dirname, './../public')))
 
 // Route
 
