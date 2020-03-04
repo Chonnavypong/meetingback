@@ -29,11 +29,12 @@ const createSendToken = (user, statusCode, res) => {
 
   // Remove password from output
   user.password = undefined
+  console.log(user)
 
   res.status(statusCode).json({
     status: 'success',
     token,
-    data: {
+    doc: {
       user
     }
   })
@@ -59,7 +60,9 @@ exports.login = catchAsync(async (req, res, next) => {
   const {
     email,
     password
-  } = req.body;
+  } = req.body
+
+  // console.log(req.body)
 
   // 1) Check if email and password exist
   if (!email || !password) {
@@ -69,6 +72,7 @@ exports.login = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     email
   }).select('+password');
+  console.log(user)
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
@@ -85,6 +89,8 @@ exports.protect = catchAsync(async (req, res, next) => {
   // check token จาก header
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1]
+  } else if ( req.cookies.jwt) {
+    token = req.cookies.jwt
   }
 
   if (!token) {

@@ -1,7 +1,8 @@
 const path = require('path')
 const express = require('express')
 const morgan = require('morgan')
-// const cors = require('cors')
+const cors = require('cors')
+const cookieParser = require('cookie-parser')
 
 const AppError = require('../app/utils/appError');
 const globalErrorHandler = require('../app/controllers/errorController');
@@ -14,8 +15,8 @@ const expressSession = require('express-session')
 
 // 1) GLOBAL MIDDLEWARES
 // Implement CORS
-// app.use(cors())
-// app.options('*', cors())
+app.use(cors())
+app.options('*', cors())
 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'))
@@ -33,19 +34,22 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({
     limit: '10kb'
 }))
+app.use(cookieParser())
 app.use(express.urlencoded({
     extended: true,
     limit: '10kb'
 }))
 
-const cors = require('cors')
-app.use(cors())
-
 //  การอ้างอิง จาก app.js ไปหา public folder -> ./../public
 app.use(express.static(path.join(__dirname, './../public')))
 
-// Route
+// Test middleware
+// app.use( (req, res, next ) => {
+//     // console.log( req.cookies )
+//     next()
+// })
 
+// Route
 app.use('/api/v1/users', usersRouter)
 app.use('/api/v1/equips', equipRouter)
 

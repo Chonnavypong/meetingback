@@ -97,7 +97,7 @@ exports.creatEquip = async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       result: data.length,
-      data: {
+      doc: {
         data
       }
     })
