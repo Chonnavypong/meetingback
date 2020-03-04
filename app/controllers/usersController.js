@@ -3,6 +3,7 @@ const AppError = require('./../utils/appError')
 const catchAsync = require('./../utils/catchAsync')
 const validator = require('validator')
 
+
 exports.test = async (req, res, next) => {
 
     const testEmail = req.body.email

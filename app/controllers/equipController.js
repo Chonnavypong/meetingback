@@ -3,6 +3,14 @@ const catchAsync = require('./../utils/catchAsync')
 const AppError = require('./../utils/appError')
 const sharp = require('sharp')
 
+/* เอาไว้ตรวจสอบว่ามี directory ชื่อ อยู่หรือไม่มีให้ทำการสร้างใหม่ */
+const { folder } = require('./../utils/constants')
+const fs = require('fs')
+const path = require('path')
+
+// Folder
+const dirImage = path.resolve(__dirname,`./../../${folder.image}`)
+
 // multer-A. multer setting
 const multer = require('multer')
 // multer-B. multer storage setting
@@ -32,48 +40,67 @@ const upload = multer({
 })
 
 // exports.uploadEquipPhoto = upload.single('photo') // Sigle Photo
-exports.uploadEquipPhoto = upload.fields([
-  {name: 'photoCover', maxCount: 1},
-  {name: 'photo', maxCount: 3}
+exports.uploadEquipPhoto = upload.fields([{
+    name: 'photoCover',
+    maxCount: 1
+  },
+  {
+    name: 'photo',
+    maxCount: 3
+  }
 ])
 
-exports.resizeEquipPhoto = catchAsync( async(req, res, next) => {
+exports.resizeEquipPhoto = catchAsync(async (req, res, next) => {
   // console.log(!req.files.photoCover)
 
   if (!req.files.photoCover || !req.files.photo) return next()
-  
+
   // // 1) Cover Photo
   const originalName = req.files.photoCover[0].originalname.split('.')[0]
   // console.log(`original name : ${originalName}`)
-  req.body.photoCover = `equip-${originalName}-${Date.now()}.jpeg`
+  req.body.photoCover = `equipCover-${originalName}-${Date.now()}.jpeg`
   // console.log(req.files.photoCover)
 
+  //---------------
+  // Check Folder is exists or not, If there have no folder -> create folder
+  if (!fs.existsSync(dirImage)) {
+    console.log(!fs.existsSync(dirImage))
+    fs.mkdirSync(dirImage, { recursive: true })
+  }
+  if (!fs.existsSync(path.join(dirImage, folder.imageEquipment))) {
+    fs.mkdirSync(path.join(dirImage, folder.imageEquipment))
+  }
+  //---------------
   await sharp(req.files.photoCover[0].buffer)
     .resize(1500, 500)
     .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(`public/img/equipment/${req.body.photoCover}`)
+    .jpeg({
+      quality: 90
+    })
+    .toFile(`${path.join(dirImage, folder.imageEquipment)}/${req.body.photoCover}`)
 
   // 2) Photo
-    req.body.photos = []
-    // console.log(req.body.photo)
-    // console.log(req.files)
-    await Promise.all(
-      req.files.photo.map( async (file, i) => {
-        const originalName = file.originalname.split('.')[0]
-        const filename = `equip-${originalName}-${Date.now()}-${i+1}.jpeg`
+  req.body.photos = []
+  // console.log(req.body.photo)
+  // console.log(req.files)
+  await Promise.all(
+    req.files.photo.map(async (file, i) => {
+      const originalName = file.originalname.split('.')[0]
+      const filename = `equip-${originalName}-${Date.now()}-${i+1}.jpeg`
 
-        await sharp( file.buffer )
-          .resize(500, 500)
-          .toFormat('jpeg')
-          .jpeg( { quality: 90 })
-          .toFile(`public/img/equipment/${filename}`)
+      await sharp(file.buffer)
+        .resize(500, 500)
+        .toFormat('jpeg')
+        .jpeg({
+          quality: 90
+        })
+        .toFile(`${path.join(dirImage, folder.imageEquipment)}/${filename}`)
 
-        await req.body.photos.push(filename)
-      })
-    )
+      await req.body.photos.push(filename)
+    })
+  )
 
-    // console.log(Array.isArray(req.body.photos))
+  // console.log(Array.isArray(req.body.photos))
 
   next()
 })
@@ -93,7 +120,13 @@ exports.getAllEquip = catchAsync(async (req, res, next) => {
 
 exports.creatEquip = async (req, res, next) => {
   try {
-    const data = await Equip.create(req.body)
+    console.log(req.body)
+    const data = await Equip.create({
+      name: req.body.name,
+      detail: req.body.detail,
+      photoCover: req.body.photoCover,
+      photos: req.body.photos
+    })
     res.status(200).json({
       status: 'success',
       result: data.length,
@@ -113,17 +146,17 @@ exports.deleteEquip = async (req, res, next) => {
   try {
     const doc = await Equip.findByIdAndDelete(req.params.id)
 
-    if( !doc ) {
-      return next( new AppError('No document found with that ID', 404))
+    if (!doc) {
+      return next(new AppError('No document found with that ID', 404))
     }
     res.status(200)
-  
+
   } catch (err) {
-    
-      res.status(401).json({
+
+    res.status(401).json({
       status: 'Fail',
       message: err.message
-    
+
     })
   }
 }
@@ -140,13 +173,13 @@ exports.updateEquip = async (req, res, next) => {
     }
 
     res.status(200)
-  
+
   } catch (err) {
-    
-      res.status(401).json({
+
+    res.status(401).json({
       status: 'Fail',
       message: err.message
-    
+
     })
   }
 }

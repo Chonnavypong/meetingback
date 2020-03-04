@@ -9,6 +9,7 @@ const globalErrorHandler = require('../app/controllers/errorController');
 
 const usersRouter = require('../app/routes/usersRoutes')
 const equipRouter = require('../app/routes/equipRoutes')
+const testRouter = require('../app/routes/testRoutes')
 
 const app = express()
 const expressSession = require('express-session')
@@ -45,13 +46,14 @@ app.use(express.static(path.join(__dirname, './../public')))
 
 // Test middleware
 // app.use( (req, res, next ) => {
-//     // console.log( req.cookies )
+//     console.log( 'Test from App.js' )
 //     next()
 // })
 
 // Route
 app.use('/api/v1/users', usersRouter)
 app.use('/api/v1/equips', equipRouter)
+app.use('/api/v1/test', testRouter)
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404))
