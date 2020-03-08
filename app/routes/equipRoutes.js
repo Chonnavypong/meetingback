@@ -12,6 +12,6 @@ router.route('/')
 
 router.route('/:id')
   .delete(equipController.deleteEquip)
-  .patch(equipController.updateEquip)
+  .patch(equipController.uploadEquipPhoto, equipController.resizeEquipPhoto, equipController.updateEquip)
 
 module.exports = router

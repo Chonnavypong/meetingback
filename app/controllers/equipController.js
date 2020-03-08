@@ -3,13 +3,17 @@ const catchAsync = require('./../utils/catchAsync')
 const AppError = require('./../utils/appError')
 const sharp = require('sharp')
 
-/* เอาไว้ตรวจสอบว่ามี directory ชื่อ อยู่หรือไม่มีให้ทำการสร้างใหม่ */
-const { folder } = require('./../utils/constants')
+// WORK_FLOW:/* เอาไว้ตรวจสอบว่ามี directory ชื่อ อยู่หรือไม่มีให้ทำการสร้างใหม่ */
+
+const {
+  folder
+} = require('./../utils/constants')
 const fs = require('fs')
 const path = require('path')
 
 // Folder
-const dirImage = path.resolve(__dirname,`./../../${folder.image}`)
+const dirImage = path.resolve(__dirname, `./../../${folder.image}`)
+const dirEquipImg = path.join(dirImage, folder.imageEquipment)
 
 // multer-A. multer setting
 const multer = require('multer')
@@ -51,13 +55,15 @@ exports.uploadEquipPhoto = upload.fields([{
 ])
 
 exports.resizeEquipPhoto = catchAsync(async (req, res, next) => {
-  // console.log(!req.files.photoCover)
+  //TODO: Check logic ลองเปลี่ยนเป็น Switch Case
+  console.log(' logic ',!req.files.photoCover, !req.files.photo)
+  // console.log(!req.files.photoCover || !req.files.photo)
 
   if (!req.files.photoCover || !req.files.photo) return next()
 
   // // 1) Cover Photo
   const originalName = req.files.photoCover[0].originalname.split('.')[0]
-  // console.log(`original name : ${originalName}`)
+  console.log(`original name : ${originalName}`)
   req.body.photoCover = `equipCover-${originalName}-${Date.now()}.jpeg`
   // console.log(req.files.photoCover)
 
@@ -65,10 +71,12 @@ exports.resizeEquipPhoto = catchAsync(async (req, res, next) => {
   // Check Folder is exists or not, If there have no folder -> create folder
   if (!fs.existsSync(dirImage)) {
     console.log(!fs.existsSync(dirImage))
-    fs.mkdirSync(dirImage, { recursive: true })
+    fs.mkdirSync(dirImage, {
+      recursive: true
+    })
   }
-  if (!fs.existsSync(path.join(dirImage, folder.imageEquipment))) {
-    fs.mkdirSync(path.join(dirImage, folder.imageEquipment))
+  if (!fs.existsSync(dirEquipImg)) {
+    fs.mkdirSync(dirEquipImg)
   }
   //---------------
   await sharp(req.files.photoCover[0].buffer)
@@ -120,7 +128,7 @@ exports.getAllEquip = catchAsync(async (req, res, next) => {
 
 exports.creatEquip = async (req, res, next) => {
   try {
-    console.log(req.body)
+    console.log('create-> ', req.body.name)
     const data = await Equip.create({
       name: req.body.name,
       detail: req.body.detail,
@@ -144,12 +152,31 @@ exports.creatEquip = async (req, res, next) => {
 
 exports.deleteEquip = async (req, res, next) => {
   try {
+    // console.log('id ' + req.params.id)
     const doc = await Equip.findByIdAndDelete(req.params.id)
 
+    console.log(doc)
     if (!doc) {
       return next(new AppError('No document found with that ID', 404))
     }
-    res.status(200)
+    // console.log('doc ' + doc)
+    //---- delete photoCover & photos-----
+    const delPhotoCover = path.join(dirEquipImg, doc.photoCover)
+
+    // console.log( 'photoCover name ' + delPhotoCover )
+    if (fs.existsSync(delPhotoCover)) fs.unlink(delPhotoCover, () => null) // () => null เนื่องจาก fs.unlink ต้องการ callback ถ้าไม่มีจะแสดง warnning ออกมา
+
+    doc.photos.map((photo) => {
+      // console.log('photo name ' + photo)
+      const delPhoto = path.join(dirEquipImg, photo)
+      if (fs.existsSync(delPhoto)) fs.unlink(delPhoto, () => null)
+
+      // console.log('path photo ' + path.join(dirEquipImg, photo))
+    })
+
+    res.status(200).json({
+      status: 'success',
+    })
 
   } catch (err) {
 
@@ -163,6 +190,7 @@ exports.deleteEquip = async (req, res, next) => {
 
 exports.updateEquip = async (req, res, next) => {
   try {
+    await console.log(req.params, req.body.name)
     const doc = await Equip.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
@@ -171,8 +199,21 @@ exports.updateEquip = async (req, res, next) => {
     if (!doc) {
       return next(new AppError('No document found with that ID', 404));
     }
+    // console.log(doc)
+    // ---- Update รูปภาพ ----
+    console.log(req.body, req.files.photoCover)
+    if (req.files.photoCover) {
+      const deletePhotoCover = path.join(dirEquipImg, doc.photoCover)
+      if (fs.existsSync(deletePhotoCover)) fs.unlink(deletePhotoCover, () => null)
+      console.log('Old PhotoCover ' + deletePhotoCover)
+      // fs.unlink( deletePhotoCover, () => null )
+    }
 
-    res.status(200)
+    res.status(200).json({
+      status: 'success',
+      info: req.body
+
+    })
 
   } catch (err) {
 
